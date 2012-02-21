@@ -3,7 +3,7 @@
 
     <string name="hello">Hello World, SharetoTalkActivity!</string>
     <string name="app_name">Share to Talk</string>
-    <string name="share_label">AAA GTalk contacts</string>
+    <string name="share_label">Talk contacts</string>
     <string name="gtalk_login_category">Gtalk login</string>
     <string name="settings_menu_label">Settings</string>
     <string name="pref_group_advanced">Advanced</string>

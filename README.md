@@ -4,16 +4,16 @@ Share to Talk
 Android application which adds your Google Talk contacts in the
 Send To menu.
 
-# Tap share in some app
+1. Tap share in some app
 ![Share menu in Browser](http://sharetotalk.gdr.name/share-to-gtalk-1.png)
 
-# Choose "Talk contacts"
+1. Choose "Talk contacts"
 ![Share Via: Talk contacts](http://sharetotalk.gdr.name/share-to-gtalk-2.png)
 
-# Choose your recipient
+1. Choose your recipient
 ![Share to Talk contact: chosing recipient](http://sharetotalk.gdr.name/share-to-gtalk-3.png)
 
-# This is what your recipient sees
+1. This is what your recipient sees
 ![Screenshot from Psi on computer](http://sharetotalk.gdr.name/share-to-gtalk-4.png)
 
 License
