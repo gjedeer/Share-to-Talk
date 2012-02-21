@@ -27,6 +27,10 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
+/**
+ * Adapter between contacts list and a list of ContactItem objects
+ * @author GDR!
+ */
 public class ContactListAdapter extends ArrayAdapter<ContactItem> {
     private ArrayList<ContactItem> items;
     private Context context;
@@ -46,16 +50,15 @@ public class ContactListAdapter extends ArrayAdapter<ContactItem> {
 
         ContactItem item = items.get(position);
         if (item!= null) {
-            // My layout has only one TextView
-            TextView itemView = (TextView) view.findViewById(R.id.toptext);
-            if (itemView != null) {
-                // do whatever you want with your string and long
-                itemView.setText(item.getName());
+        	/* IDs of items from contact_row.xml */
+            TextView nameView = (TextView) view.findViewById(R.id.toptext);
+            if (nameView != null) {
+                nameView.setText(item.getName());
             }
-            TextView itemView2 = (TextView) view.findViewById(R.id.bottomtext);
-            if (itemView != null) {
-                // do whatever you want with your string and long
-                itemView2.setText(item.jid);
+            
+            TextView jidView = (TextView) view.findViewById(R.id.bottomtext);
+            if (jidView != null) {
+                jidView.setText(item.jid);
             }
 
          }

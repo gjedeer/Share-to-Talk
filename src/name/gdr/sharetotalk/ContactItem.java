@@ -18,8 +18,12 @@ package name.gdr.sharetotalk;
 
 import org.jivesoftware.smack.packet.Presence;
 
-
+/**
+ * This class represents an item displayed in contact list
+ * @author GDR!
+ */
 public class ContactItem implements Comparable<ContactItem>{
+	/* Enums for simplified statuses handling outside class */
 	static final public int PRESENCE_OFFLINE = 0;
 	static final public int PRESENCE_ONLINE = 1;
 	static final public int PRESENCE_AWAY = 2;
@@ -28,6 +32,9 @@ public class ContactItem implements Comparable<ContactItem>{
 	public String jid;
 	public Presence presence; 
 	
+	/**
+	 * Implementation of Comparable interface
+	 */
 	public int compareTo(ContactItem o2) {
 		String s1 = this.getComparableString();
 		String s2 = o2.getComparableString();
@@ -35,13 +42,21 @@ public class ContactItem implements Comparable<ContactItem>{
 		return s1.compareToIgnoreCase(s2);
 	}
 	
+	/**
+	 * Returns any string that's comparable when sorting
+	 * @return in order of preference: name, jid and empty string
+	 */
 	private String getComparableString()
 	{
 		if(this.name != null) return name;
 		if(this.jid != null) return jid;
 		return "";
 	}
-	
+
+	/**
+	 * Returns printable name: name or jid
+	 * @return printable contact name
+	 */
 	public String getName() {
 		if(this.name != null) return this.name;
 		if(this.jid != null) {
@@ -49,9 +64,13 @@ public class ContactItem implements Comparable<ContactItem>{
 			return parts[0];
 		}
 		
-		return "";
+		return "(unknown)";
 	}
 	
+	/**
+	 * Queries the presence object if available
+	 * @return PRESENCE_* constant
+	 */
 	public int getPresence() {
 		int rv = PRESENCE_OFFLINE;
 		

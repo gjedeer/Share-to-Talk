@@ -20,6 +20,7 @@ package name.gdr.sharetotalk;
 import android.os.Bundle;
 import android.preference.PreferenceActivity;
 
+/** The preferences activity - main activity for this app */
 public class SharetoTalkActivity extends PreferenceActivity {
     /** Called when the activity is first created. */
     @Override
