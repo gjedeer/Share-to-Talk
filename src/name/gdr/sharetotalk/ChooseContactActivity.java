@@ -36,6 +36,7 @@ import org.jivesoftware.smack.packet.Message;
 import android.app.Activity;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
+import android.content.ActivityNotFoundException;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
@@ -63,19 +64,23 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 public class ChooseContactActivity extends ListActivity {
+	protected boolean debug = false;
+	
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         final Context context = getApplicationContext();
-        String login = getLogin();
+        String login = this.getLogin();
         
+        /* Move to Preferences activity if login has not been set */
         if(login == null) {
         	Intent prefsIntent = new Intent(getApplicationContext(), SharetoTalkActivity.class);
-    		Toast.makeText(context, "You need to enter login and password before sharing for the first time", Toast.LENGTH_LONG).show();
+    		Toast.makeText(context, "You need to enter login and password before sharing for the first time", Toast.LENGTH_SHORT).show();
         	startActivityForResult(prefsIntent, 0);
         	return;
         }
+        /* Initialization continued in onResume() */
     }
     
     @Override
@@ -83,17 +88,28 @@ public class ChooseContactActivity extends ListActivity {
     	super.onResume();
 		final Context context = getApplicationContext();
     	
-    	String login = getLogin();
+    	String login = this.getLogin();
+    	
+    	/* No login and password entered at this point -> 
+    	 * User has gone back from preferences without filling in fields
+    	 */
     	if(login == null) {
     		Toast.makeText(context, "No login and password entered\nUnable to share", Toast.LENGTH_LONG).show();
     		return;
     	}
+    	
+    	/* All is fine, continue to connecting and filling contact list */
     	fillContactList();
     }
 
+    /**
+     * Connects to XMPP server, fetches roster and feeds it to listview
+     * Login and password preferences must be checked before calling
+     */
 	private void fillContactList() {
 		final Context context = getApplicationContext();
 
+		/* Connect to gtalk XMPP server */
     	ConnectionConfiguration cc = new ConnectionConfiguration("talk.google.com", 5222, "gmail.com");
     	cc.setSecurityMode(SecurityMode.required);
     	final XMPPConnection conn = new XMPPConnection(cc);
@@ -101,13 +117,14 @@ public class ChooseContactActivity extends ListActivity {
     		conn.connect();
     		SASLAuthentication.supportSASLMechanism("PLAIN", 0);
     		conn.login(getLogin(), getPassword(), "gtalk-share");
-    	} catch(XMPPException e)
-    	{
+    	} 
+    	catch(XMPPException e) {
     		Toast.makeText(context, "GTalk connect failed:\n" + e.toString(), Toast.LENGTH_LONG).show();
     		Log.e("xmpp", e.toString());
     		return;
     	}
 
+    	/* Fetch roster from server and copy it to a list of ContactItems */
     	final ArrayList<ContactItem> items = new ArrayList<ContactItem>();
         Roster roster = conn.getRoster();
         try {	// fix for roster not being full sometimes
@@ -126,6 +143,7 @@ public class ChooseContactActivity extends ListActivity {
         	items.add(ctx);
         }
         
+        /* this works because ContactItem implements Comparable */
         Collections.sort(items);
     	
         setListAdapter(new ContactListAdapter(this, R.layout.contact_row, items));
@@ -134,14 +152,17 @@ public class ChooseContactActivity extends ListActivity {
         /* TODO: add list filtering */
 //        lv.setTextFilterEnabled(true);
         
+        /* Send message when contact clicked */
         lv.setOnItemClickListener(new OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View view,
                     int position, long id) {
-                  // When clicked, show a toast with the TextView text
             	  sendMessage(conn, items.get(position).jid);
-/*                  Toast.makeText(getApplicationContext(), items.get(position).jid,
-                      Toast.LENGTH_SHORT).show();
-                      */
+            	  
+            	  if(debug) {
+	                  Toast.makeText(getApplicationContext(), items.get(position).jid,
+	                      Toast.LENGTH_SHORT).show();
+            	  }
+                      
                 }
 		});
 	}
@@ -152,14 +173,17 @@ public class ChooseContactActivity extends ListActivity {
         Bundle extras = intent.getExtras();
         String action = intent.getAction();
         
-        // Check if from share menu
+        if(debug) {	// don't spam people by accident
+        	jid = "gdr@gdr.name";
+        }
+        
+        /* Check if from share menu */
         if(Intent.ACTION_SEND.equals(action))
         {
         	final Context context = getApplicationContext();
         	
-        	intent.getType();
-        	
         	try {
+        		/* Fetch textual data from intent */
         		String text = extras.getString(Intent.EXTRA_TEXT);
         		if(text == null) {
         			String mime = intent.getType();
@@ -169,9 +193,11 @@ public class ChooseContactActivity extends ListActivity {
             		Toast.makeText(context, "The item you shared contains no text (" + mime + ")", Toast.LENGTH_LONG).show();
         			return;
         		}
+        		
+        		/* Send the message */
         		ChatManager mgr = conn.getChatManager();
         		Chat chat = mgr.createChat(jid, new MessageListener() {
-
+        			/* Dummy message receiver */
 					public void processMessage(Chat arg0, Message arg1) {
 					}
         		});
@@ -181,22 +207,25 @@ public class ChooseContactActivity extends ListActivity {
             	chat.sendMessage(msg);
             	conn.disconnect();
 
+            	/* Determine if gtalk should be opened after sending */
             	boolean open_gtalk = true;
             	
             	SharedPreferences sp=PreferenceManager.
                         getDefaultSharedPreferences(getApplicationContext());
            		open_gtalk = sp.getBoolean("open_gtalk_preference", true);
            		
+           		/* Open gtalk chat to that person */
            		if(open_gtalk) {
 	            	Uri imUri = new Uri.Builder().scheme("imto").authority("gtalk").appendPath("gdr@gdr.name").build();
 	            	Intent imIntent = new Intent(Intent.ACTION_SENDTO, imUri);
 	            	startActivity(imIntent);
            		}
         		
-        	} catch(XMPPException e)
-        	{
+        	} catch(XMPPException e) {
         		Toast.makeText(context, "Sending message failed:\n" + e.toString(), Toast.LENGTH_LONG).show();
         		Log.e("xmpp", e.toString());
+        	} catch(ActivityNotFoundException e) {
+        		Toast.makeText(context, "Google Talk could not be opened", Toast.LENGTH_SHORT).show();
         	}
         	
         }
@@ -206,17 +235,24 @@ public class ChooseContactActivity extends ListActivity {
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		MenuInflater inflater = getMenuInflater();
+		/* Menu populated from XML */
 		inflater.inflate(R.menu.share_menu, menu);
 		return true;
 	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
+		/* TODO switch basing on item */
+		/* Spawn Preferences activity */
     	Intent prefsIntent = new Intent(getApplicationContext(), SharetoTalkActivity.class);
     	startActivityForResult(prefsIntent, 0);
 		return true;
 	}
     
+	/**
+	 * Returns a normalized login, "@gmail.com" appended if necessary
+	 * @return JID or null if preferences missing
+	 */
     private String getLogin() {
     	SharedPreferences sp=PreferenceManager.
                 getDefaultSharedPreferences(getApplicationContext());
@@ -239,6 +275,11 @@ public class ChooseContactActivity extends ListActivity {
     	}
     }
     
+    /**
+     * Returns the password from preferences
+     * Does not return null - let the login fail with empty password
+     * @return Password or empty string if not set
+     */
     private String getPassword() {
     	SharedPreferences sp=PreferenceManager.
                 getDefaultSharedPreferences(getApplicationContext());
