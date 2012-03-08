@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
     <PreferenceCategory android:title="@string/gtalk_login_category">
-        <EditTextPreference android:title="Gmail login" android:key="login_preference" android:summary="Enter your gmail login, with or without @gmail.com" android:dialogTitle="Gmail login"/>
-        <EditTextPreference android:title="Password" android:key="password_preference" android:summary="Password to your gmail account" android:dialogTitle="Password" android:inputType="textPassword"/>
-        
+        <EditTextPreference android:title="@string/prefs_login" android:key="login_preference" android:summary="@string/prefs_login_summary" android:dialogTitle="@string/prefs_login_dialog"/>
+        <EditTextPreference android:title="@string/prefs_password" android:key="password_preference" android:summary="@string/prefs_password_summary" android:dialogTitle="@string/prefs_password_dialog" android:inputType="textPassword"/>
     </PreferenceCategory>
-    <PreferenceCategory android:title="@string/pref_group_advanced"><CheckBoxPreference android:key="open_gtalk_preference" android:summaryOn="Open Google Talk conversation after sharing" android:summaryOff="Don't open Google Talk conversation after sharing" android:title="Open google talk" /></PreferenceCategory>
-    
-
+    <PreferenceCategory android:title="@string/pref_group_advanced">
+        <CheckBoxPreference android:key="open_gtalk_preference" android:summaryOn="@string/prefs_open_on" android:summaryOff="@string/prefs_open_off" android:title="@string/prefs_open" />
+    </PreferenceCategory>
 </PreferenceScreen>

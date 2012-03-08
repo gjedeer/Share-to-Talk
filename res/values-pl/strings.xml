@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Udostępnij do Talk</string>
+    <string name="share_label">Kontakty Talk</string>
+    <string name="gtalk_login_category">Konto Google</string>
+    <string name="settings_menu_label">Ustawienia</string>
+    <string name="pref_group_advanced">Zaawansowane</string>
+    <string name="please_enter_credentials">Używasz programu po raz pierwszy. Wpisz login i hasło do konta Google.</string>
+    <string name="credentials_not_entered">Nie wpisano loginu ani hasła\nUdostępnienie elementu nie jest możliwe</string>
+    <string name="gtalk_connection_failed">Błąd połączenia GTalk:</string>
+    <string name="no_text">Udostępniony element nie zawiera tekstu</string>
+    <string name="sending_failed">Błąd wysyłania wiadomości</string>
+    <string name="sending_succeeded">Wiadomość wysłana</string>
+    <string name="could_not_open_gtalk">Nie można otworzyć programu Google Talk</string>
+    
+</resources>

@@ -1,11 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="hello">Hello World, SharetoTalkActivity!</string>
     <string name="app_name">Share to Talk</string>
     <string name="share_label">Talk contacts</string>
     <string name="gtalk_login_category">Gtalk login</string>
     <string name="settings_menu_label">Settings</string>
     <string name="pref_group_advanced">Advanced</string>
+    <string name="please_enter_credentials">You need to enter login and password before sharing for the first time</string>
+    <string name="credentials_not_entered">No login and password entered\nUnable to share</string>
+    <string name="gtalk_connection_failed">GTalk connect failed:</string>
+    <string name="no_text">The item you shared contains no text</string>
+    <string name="sending_failed">Sending message failed</string>
+    <string name="sending_succeeded">Message sent</string>
+    <string name="could_not_open_gtalk">Google Talk could not be opened</string>
+    <string name="prefs_login">Gmail login</string>
+    <string name="prefs_password">Gmail password</string>
+    <string name="prefs_login_summary">Enter your gmail login, with or without @gmail.com</string>
+    <string name="prefs_password_summary">Password to your gmail account</string>
+    <string name="prefs_login_dialog">Gmail login</string>
+    <string name="prefs_password_dialog">Password</string>
+    <string name="prefs_open">Open google talk</string>
+    <string name="prefs_open_off">Don\'t open Google Talk conversation after sharing</string>
+    <string name="prefs_open_on">Open Google Talk conversation after sharing</string>
 
 </resources>

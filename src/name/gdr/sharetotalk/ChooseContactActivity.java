@@ -76,7 +76,7 @@ public class ChooseContactActivity extends ListActivity {
         /* Move to Preferences activity if login has not been set */
         if(login == null) {
         	Intent prefsIntent = new Intent(getApplicationContext(), SharetoTalkActivity.class);
-    		Toast.makeText(context, "You need to enter login and password before sharing for the first time", Toast.LENGTH_SHORT).show();
+    		Toast.makeText(context, getString(R.string.please_enter_credentials), Toast.LENGTH_SHORT).show();
         	startActivityForResult(prefsIntent, 0);
         	return;
         }
@@ -94,7 +94,7 @@ public class ChooseContactActivity extends ListActivity {
     	 * User has gone back from preferences without filling in fields
     	 */
     	if(login == null) {
-    		Toast.makeText(context, "No login and password entered\nUnable to share", Toast.LENGTH_LONG).show();
+    		Toast.makeText(context, getString(R.string.credentials_not_entered), Toast.LENGTH_LONG).show();
     		return;
     	}
     	
@@ -119,7 +119,7 @@ public class ChooseContactActivity extends ListActivity {
     		conn.login(getLogin(), getPassword(), "gtalk-share");
     	} 
     	catch(XMPPException e) {
-    		Toast.makeText(context, "GTalk connect failed:\n" + e.toString(), Toast.LENGTH_LONG).show();
+    		Toast.makeText(context, getString(R.string.gtalk_connection_failed) + "\n" + e.toString(), Toast.LENGTH_LONG).show();
     		Log.e("xmpp", e.toString());
     		return;
     	}
@@ -190,7 +190,7 @@ public class ChooseContactActivity extends ListActivity {
         			if(mime == null) {
         				mime = "unknown";
         			}
-            		Toast.makeText(context, "The item you shared contains no text (" + mime + ")", Toast.LENGTH_LONG).show();
+            		Toast.makeText(context, getString(R.string.no_text) + " (" + mime + ")", Toast.LENGTH_LONG).show();
         			return;
         		}
         		
@@ -204,7 +204,12 @@ public class ChooseContactActivity extends ListActivity {
         		
             	final Message msg = new Message(jid, Message.Type.chat);
             	msg.setBody(text);
-            	chat.sendMessage(msg);
+            	
+            	/* last chance to reconnect */
+            	if(!conn.isConnected()) {
+            		conn.connect();
+            	}
+            	chat.sendMessage(msg); // throws InvalidStateException if not connected
             	conn.disconnect();
 
             	/* Determine if gtalk should be opened after sending */
@@ -216,16 +221,21 @@ public class ChooseContactActivity extends ListActivity {
            		
            		/* Open gtalk chat to that person */
            		if(open_gtalk) {
-	            	Uri imUri = new Uri.Builder().scheme("imto").authority("gtalk").appendPath("gdr@gdr.name").build();
+	            	Uri imUri = new Uri.Builder().scheme("imto").authority("gtalk").appendPath(jid).build();
 	            	Intent imIntent = new Intent(Intent.ACTION_SENDTO, imUri);
 	            	startActivity(imIntent);
+           		} else {
+           			Toast.makeText(context, getString(R.string.sending_succeeded), Toast.LENGTH_SHORT).show();
            		}
         		
         	} catch(XMPPException e) {
-        		Toast.makeText(context, "Sending message failed:\n" + e.toString(), Toast.LENGTH_LONG).show();
+        		Toast.makeText(context, getString(R.string.sending_failed) + ":\n" + e.toString(), Toast.LENGTH_LONG).show();
+        		Log.e("xmpp", e.toString());
+        	} catch(IllegalStateException e) {
+        		Toast.makeText(context, getString(R.string.sending_failed) + ":\n" + e.toString(), Toast.LENGTH_LONG).show();
         		Log.e("xmpp", e.toString());
         	} catch(ActivityNotFoundException e) {
-        		Toast.makeText(context, "Google Talk could not be opened", Toast.LENGTH_SHORT).show();
+        		Toast.makeText(context, getString(R.string.could_not_open_gtalk), Toast.LENGTH_SHORT).show();
         	}
         	
         }
