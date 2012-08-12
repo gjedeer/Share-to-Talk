@@ -19,7 +19,7 @@
     <string name="prefs_password_summary">Password to your gmail account</string>
     <string name="prefs_login_dialog">Gmail login</string>
     <string name="prefs_password_dialog">Password</string>
-    <string name="prefs_open">Open google talk</string>
+    <string name="prefs_open">Open Google Talk</string>
     <string name="prefs_open_off">Don\'t open Google Talk conversation after sharing</string>
     <string name="prefs_open_on">Open Google Talk conversation after sharing</string>
 

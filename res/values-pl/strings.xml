@@ -12,5 +12,13 @@
     <string name="sending_failed">Błąd wysyłania wiadomości</string>
     <string name="sending_succeeded">Wiadomość wysłana</string>
     <string name="could_not_open_gtalk">Nie można otworzyć programu Google Talk</string>
-    
+    <string name="prefs_login_dialog">Login do Gmail</string>
+    <string name="prefs_login">Login</string>
+    <string name="prefs_login_summary">Twój login gmail, z lub bez @gmail.com na końcu</string>
+    <string name="prefs_open">Otwieranie Google Talk</string>
+	<string name="prefs_open_off">Nie otwieraj rozmowy w Google Talk po wysłaniu wiadomości</string>
+	<string name="prefs_open_on">Otwieraj rozmowę w Google Talk po wysłaniu wiadomości</string>
+    <string name="prefs_password_dialog">Hasło</string>
+    <string name="prefs_password">Hasło</string>
+    <string name="prefs_password_summary">Hasło do twojego konta Gmail</string>
 </resources>
