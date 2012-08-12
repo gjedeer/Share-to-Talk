@@ -19,7 +19,6 @@ package name.gdr.sharetotalk;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 import org.jivesoftware.smack.Chat;
 import org.jivesoftware.smack.ChatManager;
@@ -33,38 +32,26 @@ import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.ConnectionConfiguration.SecurityMode;
 import org.jivesoftware.smack.packet.Message;
 
-import android.app.Activity;
 import android.app.ListActivity;
-import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
-import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Debug;
 import android.preference.PreferenceManager;
-import android.provider.ContactsContract;
-import android.provider.ContactsContract.Data;
-import android.provider.ContactsContract.RawContacts;
-import android.provider.ContactsContract.RawContacts.Entity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 public class ChooseContactActivity extends ListActivity {
-	protected boolean debug = false;
+	protected boolean debug = true;
 	
     /** Called when the activity is first created. */
     @Override
