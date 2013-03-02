@@ -22,5 +22,6 @@
     <string name="prefs_open">Open Google Talk</string>
     <string name="prefs_open_off">Don\'t open Google Talk conversation after sharing</string>
     <string name="prefs_open_on">Open Google Talk conversation after sharing</string>
+    <string name="connecting">Downloading your contact list...</string>
 
 </resources>

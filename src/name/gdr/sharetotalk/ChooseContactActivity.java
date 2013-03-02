@@ -16,6 +16,7 @@
  */
 package name.gdr.sharetotalk;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -32,12 +33,19 @@ import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.ConnectionConfiguration.SecurityMode;
 import org.jivesoftware.smack.packet.Message;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
+import android.accounts.AccountManagerFuture;
+import android.accounts.AuthenticatorException;
+import android.accounts.OperationCanceledException;
+import android.app.Activity;
 import android.app.ListActivity;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -45,6 +53,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
@@ -52,11 +61,14 @@ import android.widget.Toast;
 
 public class ChooseContactActivity extends ListActivity {
 	protected boolean debug = true;
+	private XMPPConnection conn = null;
 	
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
+        setContentView(R.layout.contact_list);
         final Context context = getApplicationContext();
         String login = this.getLogin();
         
@@ -70,7 +82,8 @@ public class ChooseContactActivity extends ListActivity {
         /* Initialization continued in onResume() */
     }
     
-    @Override
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+	@Override
     public void onResume() {
     	super.onResume();
 		final Context context = getApplicationContext();
@@ -84,9 +97,33 @@ public class ChooseContactActivity extends ListActivity {
     		Toast.makeText(context, getString(R.string.credentials_not_entered), Toast.LENGTH_LONG).show();
     		return;
     	}
+
     	
     	/* All is fine, continue to connecting and filling contact list */
-    	fillContactList();
+//    	fillContactList();
+		setProgressBarIndeterminateVisibility(true);
+		
+    	class ConnectXMPPTask extends AsyncTask {
+			@Override
+			protected Object doInBackground(Object... params) {
+    			for(int retry=0; retry<3; retry++) {
+    				conn = connectXMPP();
+    				if(conn != null) break;
+    				
+    				try {
+						Thread.sleep(300);
+					} catch (InterruptedException e) {}
+    			}    			
+				return null;
+			}
+
+			protected void onPostExecute(Object whatever) {
+    			fillContactList();
+    			setProgressBarIndeterminateVisibility(false);
+    		}
+    	}
+		Toast.makeText(context, getString(R.string.connecting), Toast.LENGTH_SHORT).show();
+    	new ConnectXMPPTask().execute((Object)null);
     }
 
     /**
@@ -94,64 +131,114 @@ public class ChooseContactActivity extends ListActivity {
      * Login and password preferences must be checked before calling
      */
 	private void fillContactList() {
+		if (conn == null)
+			return;
+
+		/* Fetch roster from server and copy it to a list of ContactItems */
+		final ArrayList<ContactItem> items = new ArrayList<ContactItem>();
+		int retry = 30;
+		Roster roster = conn.getRoster();
+		while(roster.getEntries().isEmpty() && retry > 0) {
+			try { // fix for roster not being full sometimes
+				Thread.sleep(50);
+			} catch (InterruptedException e) {
+				return;
+			}
+			roster = conn.getRoster();
+			retry--;
+		}
+
+		Collection<RosterEntry> entries = roster.getEntries();
+		for (RosterEntry entry : entries) {
+			ContactItem ctx = new ContactItem();
+			ctx.name = entry.getName();
+			ctx.jid = entry.getUser();
+			ctx.presence = roster.getPresence(ctx.jid);
+
+			items.add(ctx);
+		}
+
+		/* this works because ContactItem implements Comparable */
+		Collections.sort(items);
+
+		setListAdapter(new ContactListAdapter(this, R.layout.contact_row, items));
+
+		ListView lv = getListView();
+		/* TODO: add list filtering */
+		// lv.setTextFilterEnabled(true);
+
+		/* Send message when contact clicked */
+		lv.setOnItemClickListener(new OnItemClickListener() {
+			@SuppressWarnings("unchecked")
+			public void onItemClick(AdapterView<?> parent, View view,
+					int position, long id) {
+				String jid = items.get(position).jid;
+
+				@SuppressWarnings("rawtypes")
+				class SendXMPPMessageTask extends AsyncTask {
+					@Override
+					protected Object doInBackground(Object... params) {
+						String jid = (String) params[0];
+						for (int retry = 0; retry < 3; retry++) {
+							if (conn != null && conn.isAuthenticated())
+								break;
+							conn = connectXMPP();
+							if (conn != null)
+								break;
+
+							try {
+								Thread.sleep(300);
+							} catch (InterruptedException e) {
+							}
+						}
+						if (conn != null) {
+							sendMessage(conn, jid);
+
+						}
+
+						return (Object) jid;
+					}
+
+					protected void onPostExecute(Object jid) {
+						if (debug && conn != null) {
+							Toast.makeText(getApplicationContext(),
+									(String) jid, Toast.LENGTH_SHORT).show();
+						}
+						setProgressBarIndeterminateVisibility(false);
+
+					}
+				}
+				setProgressBarIndeterminateVisibility(true);
+				new SendXMPPMessageTask().execute(jid);
+			}
+		});
+	}
+
+	private XMPPConnection connectXMPP() {
 		final Context context = getApplicationContext();
 
 		/* Connect to gtalk XMPP server */
+		SASLAuthentication.registerSASLMechanism(GTalkOAuth2.NAME, GTalkOAuth2.class);
+		SASLAuthentication.supportSASLMechanism( GTalkOAuth2.NAME, 0 );
+		
+		String saslAuthString = getAuthToken(getLogin()); // TODO getLogin() -> configurable acct selection
+		
     	ConnectionConfiguration cc = new ConnectionConfiguration("talk.google.com", 5222, "gmail.com");
+    	cc.setSASLAuthenticationEnabled(true);
     	cc.setSecurityMode(SecurityMode.required);
     	final XMPPConnection conn = new XMPPConnection(cc);
     	try {
     		conn.connect();
-    		SASLAuthentication.supportSASLMechanism("PLAIN", 0);
-    		conn.login(getLogin(), getPassword(), "gtalk-share");
+    		conn.login(getLogin(), saslAuthString);
+//    		SASLAuthentication.supportSASLMechanism("PLAIN", 0);
+//    		conn.login(getLogin(), getPassword(), "gtalk-share");
     	} 
     	catch(XMPPException e) {
     		Toast.makeText(context, getString(R.string.gtalk_connection_failed) + "\n" + e.toString(), Toast.LENGTH_LONG).show();
     		Log.e("xmpp", e.toString());
-    		return;
+    		return null;
     	}
-
-    	/* Fetch roster from server and copy it to a list of ContactItems */
-    	final ArrayList<ContactItem> items = new ArrayList<ContactItem>();
-        Roster roster = conn.getRoster();
-        try {	// fix for roster not being full sometimes
-        	Thread.sleep(200);
-        } catch(InterruptedException e) {
-        	return;
-        }
-        roster = conn.getRoster();
-        Collection<RosterEntry> entries = roster.getEntries();
-        for(RosterEntry entry : entries) {
-        	ContactItem ctx = new ContactItem();
-        	ctx.name = entry.getName();
-        	ctx.jid = entry.getUser();
-        	ctx.presence = roster.getPresence(ctx.jid);
-        	
-        	items.add(ctx);
-        }
-        
-        /* this works because ContactItem implements Comparable */
-        Collections.sort(items);
-    	
-        setListAdapter(new ContactListAdapter(this, R.layout.contact_row, items));
-        
-        ListView lv = getListView();
-        /* TODO: add list filtering */
-//        lv.setTextFilterEnabled(true);
-        
-        /* Send message when contact clicked */
-        lv.setOnItemClickListener(new OnItemClickListener() {
-            public void onItemClick(AdapterView<?> parent, View view,
-                    int position, long id) {
-            	  sendMessage(conn, items.get(position).jid);
-            	  
-            	  if(debug) {
-	                  Toast.makeText(getApplicationContext(), items.get(position).jid,
-	                      Toast.LENGTH_SHORT).show();
-            	  }
-                      
-                }
-		});
+		return conn;
 	}
     
     private void sendMessage(XMPPConnection conn, String jid) {
@@ -272,15 +359,34 @@ public class ChooseContactActivity extends ListActivity {
     	}
     }
     
-    /**
-     * Returns the password from preferences
-     * Does not return null - let the login fail with empty password
-     * @return Password or empty string if not set
-     */
-    private String getPassword() {
-    	SharedPreferences sp=PreferenceManager.
-                getDefaultSharedPreferences(getApplicationContext());
-
-    	return sp.getString("password_preference", "");
+    
+    public String getAuthToken(String name)
+    {
+        Context context = getApplicationContext();
+        Activity activity = this;
+        String retVal = "";
+        Account account = new Account(name, "com.google");
+        AccountManagerFuture<Bundle> accFut = AccountManager.get(context).getAuthToken(account, "mail", null, activity, null, null);
+        try
+        {
+            Bundle authTokenBundle = accFut.getResult();
+            retVal = authTokenBundle.get(AccountManager.KEY_AUTHTOKEN).toString();
+        }
+        catch (OperationCanceledException e)
+        {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        catch (AuthenticatorException e)
+        {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        catch (IOException e)
+        {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return retVal;
     }
 }

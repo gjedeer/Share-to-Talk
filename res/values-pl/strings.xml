@@ -21,4 +21,5 @@
     <string name="prefs_password_dialog">Hasło</string>
     <string name="prefs_password">Hasło</string>
     <string name="prefs_password_summary">Hasło do twojego konta Gmail</string>
+    <string name="connecting">Ładowanie listy kontaktów...</string>
 </resources>
